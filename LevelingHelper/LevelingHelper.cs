@@ -367,7 +367,7 @@ namespace LevelingHelper
                     _timeLastPlayed = DateTime.Now;
                     if (Settings.Debug) LogMessage("Stop killing!");
                 }
-                else if(area.Level > player.Level && ExpPct(player.Level, area.Level) < Settings.ExpPenaltyWarning / 100)
+                else if (area.Level > player.Level && (int)(ExpPct(player.Level, area.Level) * 100) < Settings.ExpPenaltyWarning)
                 {
                     _soundController.PlaySound(Path.Combine(DirectoryFullName, "keep killing").Replace('\\', '/'));
                     _timeLastPlayed = DateTime.Now;

@@ -12,7 +12,7 @@ namespace LevelingHelper
             Enable = new ToggleNode(false);
             AudioDelay = new RangeNode<int>(10, 5, 100);
             Debug = new ToggleNode(false);
-            ExpPenaltyWarning = new RangeNode<int>(95, 0, 100);
+            ExpPenaltyWarning = new RangeNode<int>(90, 0, 100);
         }
 
         [Menu("Enable Plugin")]
