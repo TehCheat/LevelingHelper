@@ -15,6 +15,7 @@ namespace LevelingHelper
         private static readonly object Locker = new object();
         private static DateTime _timeLastPlayed = DateTime.UnixEpoch;
         private static string _lastArea = "";
+        private static uint _previousXP = 0;
 
 
         #region ExpTable
@@ -340,22 +341,27 @@ namespace LevelingHelper
             bool areaChanged = _lastArea != currentArea.Name;
             if (Settings.Debug) LogMessage($"Current Area: {currentArea.Name}");
             if (Settings.Debug) LogMessage($"Last Area: {_lastArea}");
+
             // reset timer if area is changed
             if (areaChanged)
             {
                 _lastArea = currentArea.Name;
                 if (Settings.Debug) LogMessage("Area changed, skipping processing");
                 _timeLastPlayed = DateTime.UnixEpoch;
+                return;
             }
+
             // no need to process if we haven't waited long enough already
             if ((DateTime.Now - _timeLastPlayed).TotalSeconds < Settings.AudioDelay.Value)
             {
                 if (Settings.Debug) LogMessage("Audio Delay not hit yet, skipping processing");
                 return;
             }
+
             var player = GameController.Player.GetComponent<Player>();
             double playerLevel = player.Level + Math.Round(GetExpPct(player.Level, player.XP), 2);
             if (Settings.Debug) LogMessage($"Player Level: {playerLevel}");
+
             Area area = Areas.Find(area => area.Name == currentArea.Name && area.Level == currentArea.RealLevel);
             if (area != null)
             {
@@ -363,16 +369,24 @@ namespace LevelingHelper
 
                 if (levelWarning < playerLevel)
                 {
-                    _soundController.PlaySound(Path.Combine(DirectoryFullName, "stop killing").Replace('\\', '/'));
-                    _timeLastPlayed = DateTime.Now;
-                    if (Settings.Debug) LogMessage("Stop killing!");
+                    if (player.XP > _previousXP)
+                    {
+                        _soundController.PlaySound(Path.Combine(DirectoryFullName, "stop killing").Replace('\\', '/'));
+                        _timeLastPlayed = DateTime.Now;
+                        if (Settings.Debug) LogMessage("Stop killing!");
+                    }
                 }
                 else if (area.Level > player.Level && (int)(ExpPct(player.Level, area.Level) * 100) < Settings.ExpPenaltyWarning)
                 {
-                    _soundController.PlaySound(Path.Combine(DirectoryFullName, "keep killing").Replace('\\', '/'));
-                    _timeLastPlayed = DateTime.Now;
-                    if (Settings.Debug) LogMessage("Kill more!");
+                    if (player.XP > _previousXP)
+                    {
+                        _soundController.PlaySound(Path.Combine(DirectoryFullName, "keep killing").Replace('\\', '/'));
+                        _timeLastPlayed = DateTime.Now;
+                        if (Settings.Debug) LogMessage("Kill more!");
+                    }
                 }
+
+                _previousXP = player.XP;
             }
         }
     }
